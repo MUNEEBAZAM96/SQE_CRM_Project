@@ -43,6 +43,15 @@ methods.update = async (req, res) => {
     _id: req.params.id,
     removed: false,
   }).exec();
+  
+  if (!tax) {
+    return res.status(404).json({
+      success: false,
+      result: null,
+      message: 'Tax not found',
+    });
+  }
+  
   const { isDefault = tax.isDefault, enabled = tax.enabled } = req.body;
 
   // if isDefault:false , we update first - isDefault:true

@@ -20,8 +20,29 @@ const update = async (req, res) => {
     removed: false,
   });
 
+  if (!previousPayment) {
+    return res.status(404).json({
+      success: false,
+      result: null,
+      message: 'No document found',
+    });
+  }
+
   const { amount: previousAmount } = previousPayment;
-  const { id: invoiceId, total, discount, credit: previousCredit } = previousPayment.invoice;
+  
+  // Get invoice - it might be autopopulated as an object or just an ID
+  const invoiceId = previousPayment.invoice._id || previousPayment.invoice;
+  const currentInvoice = await Invoice.findOne({ _id: invoiceId, removed: false });
+  
+  if (!currentInvoice) {
+    return res.status(404).json({
+      success: false,
+      result: null,
+      message: 'Invoice not found',
+    });
+  }
+  
+  const { total, discount, credit: previousCredit } = currentInvoice;
 
   const { amount: currentAmount } = req.body;
 
@@ -63,8 +84,9 @@ const update = async (req, res) => {
     }
   ).exec();
 
+  const resultInvoiceId = result.invoice._id || result.invoice;
   const updateInvoice = await Invoice.findOneAndUpdate(
-    { _id: result.invoice._id.toString() },
+    { _id: resultInvoiceId.toString() },
     {
       $inc: { credit: changedAmount },
       $set: {

@@ -1,4 +1,18 @@
 const remove = async (Model, req, res) => {
+  // Check if document exists first
+  const existingDoc = await Model.findOne({
+    _id: req.params.id,
+    removed: false,
+  });
+
+  if (!existingDoc) {
+    return res.status(404).json({
+      success: false,
+      result: null,
+      message: 'No document found ',
+    });
+  }
+
   // Find the document by id and delete it
   let updates = {
     removed: true,
@@ -7,6 +21,7 @@ const remove = async (Model, req, res) => {
   const result = await Model.findOneAndUpdate(
     {
       _id: req.params.id,
+      removed: false,
     },
     { $set: updates },
     {

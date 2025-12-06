@@ -10,7 +10,18 @@ const search = async (Model, req, res) => {
   //     })
   //     .end();
   // }
-  const fieldsArray = req.query.fields ? req.query.fields.split(',') : ['name'];
+  // Default fields based on model - use a more generic approach
+  const defaultFields = ['name', 'email', 'title', 'settingKey', 'notes', 'description'];
+  const fieldsArray = req.query.fields ? req.query.fields.split(',') : defaultFields;
+  
+  // Check if q parameter exists
+  if (!req.query.q || req.query.q.trim() === '') {
+    return res.status(202).json({
+      success: false,
+      result: [],
+      message: 'No document found by this request',
+    });
+  }
 
   const fields = { $or: [] };
 

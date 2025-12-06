@@ -13,6 +13,9 @@ const remove = async (req, res) => {
       $set: {
         removed: true,
       },
+    },
+    {
+      new: true, // Return the updated document
     }
   ).exec();
 

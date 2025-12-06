@@ -25,6 +25,14 @@ const update = async (req, res) => {
     removed: false,
   });
 
+  if (!previousInvoice) {
+    return res.status(404).json({
+      success: false,
+      result: null,
+      message: 'No document found',
+    });
+  }
+
   const { credit } = previousInvoice;
 
   const { items = [], taxRate = 0, discount = 0 } = req.body;

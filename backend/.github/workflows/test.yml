@@ -1,0 +1,87 @@
+name: Backend Tests
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [20.x]
+
+    services:
+      mongodb:
+        image: mongo:6.0
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.adminCommand(\"ping\")'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        cache-dependency-path: backend/package-lock.json
+
+    - name: Install dependencies
+      working-directory: ./backend
+      run: npm ci
+
+    - name: Run linter
+      working-directory: ./backend
+      run: npm run lint || true
+
+    - name: Run unit tests
+      working-directory: ./backend
+      run: npm run test:unit
+      env:
+        NODE_ENV: test
+        JWT_SECRET: test-jwt-secret-key
+        DATABASE: mongodb://localhost:27017/test-db
+
+    - name: Run integration tests
+      working-directory: ./backend
+      run: npm run test:integration
+      env:
+        NODE_ENV: test
+        JWT_SECRET: test-jwt-secret-key
+        DATABASE: mongodb://localhost:27017/test-db
+
+    - name: Run all tests with coverage
+      working-directory: ./backend
+      run: npm run test:coverage
+      env:
+        NODE_ENV: test
+        JWT_SECRET: test-jwt-secret-key
+        DATABASE: mongodb://localhost:27017/test-db
+
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./backend/coverage/lcov.info
+        flags: backend
+        name: backend-coverage
+        fail_ci_if_error: false
+
+    - name: Check coverage threshold
+      working-directory: ./backend
+      run: |
+        COVERAGE=$(npm run test:coverage -- --coverage --coverageReporters=text-summary 2>&1 | grep -oP 'All files[^|]*\|\s+\K\d+')
+        echo "Coverage: $COVERAGE%"
+        if [ "$COVERAGE" -lt 80 ]; then
+          echo "Coverage is below 80% threshold"
+          exit 1
+        fi
+

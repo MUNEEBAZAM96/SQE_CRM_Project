@@ -43,6 +43,15 @@ methods.update = async (req, res) => {
     _id: req.params.id,
     removed: false,
   }).exec();
+  
+  if (!paymentMode) {
+    return res.status(404).json({
+      success: false,
+      result: null,
+      message: 'Payment mode not found',
+    });
+  }
+  
   const { isDefault = paymentMode.isDefault, enabled = paymentMode.enabled } = req.body;
 
   // if isDefault:false , we update first - isDefault:true

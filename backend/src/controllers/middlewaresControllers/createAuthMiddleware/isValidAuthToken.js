@@ -19,7 +19,18 @@ const isValidAuthToken = async (req, res, next, { userModel, jwtSecret = 'JWT_SE
         jwtExpired: true,
       });
 
-    const verified = jwt.verify(token, process.env[jwtSecret]);
+    const secret = jwtSecret === 'JWT_SECRET' ? process.env.JWT_SECRET : process.env[jwtSecret];
+    let verified;
+    try {
+      verified = jwt.verify(token, secret);
+    } catch (jwtError) {
+      return res.status(401).json({
+        success: false,
+        result: null,
+        message: 'Token verification failed, authorization denied.',
+        jwtExpired: true,
+      });
+    }
 
     if (!verified)
       return res.status(401).json({

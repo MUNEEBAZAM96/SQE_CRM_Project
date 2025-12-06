@@ -5,8 +5,14 @@ const logout = async (req, res, { userModel }) => {
 
   // const token = req.cookies[`token_${cloud._id}`];
 
+  // Try to get token from Authorization header first, then from cookies
   const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1]; // Extract the token
+  let token = authHeader && authHeader.split(' ')[1]; // Extract the token
+  
+  // Fallback to cookie if Authorization header is not present
+  if (!token && req.cookies && req.cookies.token) {
+    token = req.cookies.token;
+  }
 
   if (token)
     await UserPassword.findOneAndUpdate(

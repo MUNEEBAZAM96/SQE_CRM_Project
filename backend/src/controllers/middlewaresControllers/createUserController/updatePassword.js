@@ -10,9 +10,19 @@ const updatePassword = async (userModel, req, res) => {
 
   let { password } = req.body;
 
+  if (!password) {
+    return res.status(400).json({
+      success: false,
+      result: null,
+      message: 'Password is required',
+    });
+  }
+
   if (password.length < 8)
     return res.status(400).json({
-      msg: 'The password needs to be at least 8 characters long.',
+      success: false,
+      result: null,
+      message: 'The password needs to be at least 8 characters long.',
     });
 
   // Find document by id and updates with the required fields

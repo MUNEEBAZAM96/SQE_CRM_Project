@@ -21,6 +21,19 @@ const create = async (req, res) => {
     removed: false,
   });
 
+  if (!currentInvoice) {
+    return res.status(404).json({
+      success: false,
+      result: null,
+      message: 'Invoice not found',
+    });
+  }
+
+  // Get client from invoice if not provided
+  if (!req.body.client && currentInvoice.client) {
+    req.body.client = currentInvoice.client;
+  }
+
   const {
     total: previousTotal,
     discount: previousDiscount,
@@ -54,7 +67,7 @@ const create = async (req, res) => {
   // Returning successfull response
 
   const { _id: paymentId, amount } = result;
-  const { id: invoiceId, total, discount, credit } = currentInvoice;
+  const { _id: invoiceId, total, discount, credit } = currentInvoice;
 
   let paymentStatus =
     calculate.sub(total, discount) === calculate.add(credit, amount)
