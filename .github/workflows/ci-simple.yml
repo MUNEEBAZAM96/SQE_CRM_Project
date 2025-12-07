@@ -1,0 +1,149 @@
+name: CI Pipeline (Simplified)
+
+on:
+  push:
+    branches: [ main, develop, master ]
+  pull_request:
+    branches: [ main, develop, master ]
+
+env:
+  NODE_VERSION: '20.9.0'
+
+jobs:
+  backend-tests:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./backend
+        run: npm ci
+
+      - name: Run unit tests
+        working-directory: ./backend
+        run: npm run test:unit
+
+      - name: Run integration tests
+        working-directory: ./backend
+        run: npm run test:integration
+
+      - name: Upload coverage
+        if: always()
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./backend/coverage/lcov.info
+          flags: backend
+          name: backend-coverage
+          fail_ci_if_error: false
+
+      - name: Upload coverage artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage
+          path: backend/coverage/**
+          retention-days: 30
+
+  frontend-e2e:
+    name: Frontend E2E Tests
+    runs-on: ubuntu-latest
+    
+    services:
+      mongodb:
+        image: mongo:7
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.adminCommand(\"ping\")'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: |
+            backend/package-lock.json
+            frontend/package-lock.json
+
+      - name: Install backend dependencies
+        working-directory: ./backend
+        run: npm ci
+
+      - name: Install frontend dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Install Cypress
+        working-directory: ./frontend
+        run: npx cypress install
+
+      - name: Setup test environment
+        working-directory: ./backend
+        run: |
+          echo "NODE_ENV=test" > .env
+          echo "PORT=3000" >> .env
+          echo "DATABASE=mongodb://localhost:27017/test" >> .env
+          echo "JWT_SECRET=test-secret-key-for-ci" >> .env
+
+      - name: Start backend server
+        working-directory: ./backend
+        run: |
+          npm start > server.log 2>&1 &
+          echo $! > server.pid
+          echo "Backend server starting..."
+          sleep 20
+
+      - name: Check backend server
+        run: |
+          echo "Checking backend server status..."
+          if curl -f http://localhost:3000/ 2>/dev/null; then
+            echo "✅ Backend server is running"
+          else
+            echo "❌ Backend server not responding"
+            if [ -f ./backend/server.log ]; then
+              echo "Server logs:"
+              cat ./backend/server.log
+            fi
+            exit 1
+          fi
+
+      - name: Run Cypress tests
+        working-directory: ./frontend
+        run: npx cypress run
+        continue-on-error: false
+
+      - name: Upload Cypress artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-artifacts
+          path: |
+            frontend/cypress/screenshots
+            frontend/cypress/videos
+          retention-days: 7
+
+      - name: Stop backend server
+        if: always()
+        working-directory: ./backend
+        run: |
+          if [ -f server.pid ]; then
+            kill $(cat server.pid) || true
+          fi
+
