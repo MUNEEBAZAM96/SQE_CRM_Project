@@ -114,6 +114,7 @@ jobs:
         env:
           NODE_ENV: test
           PORT: 3000
+          HOST: 0.0.0.0
           DATABASE: mongodb://localhost:27017/test
           JWT_SECRET: test-secret-key-for-ci
           RESEND_API: re_test_mock_key
@@ -124,11 +125,14 @@ jobs:
           JWT_TOKEN_EXPIRATION: 18000000
           JWT_TOKEN_HASH_ALGO: SHA-256
         run: |
+          echo "Starting backend server..."
           npm start > server.log 2>&1 &
           SERVER_PID=$!
           echo $SERVER_PID > server.pid
           echo "Backend server starting (PID: $SERVER_PID)..."
-          sleep 5
+          
+          # Wait a bit for server to initialize
+          sleep 3
           
           # Check if process is still running
           if ! kill -0 $SERVER_PID 2>/dev/null; then
@@ -137,8 +141,15 @@ jobs:
             exit 1
           fi
           
-          echo "Server process is running, waiting for it to be ready..."
-          sleep 10
+          echo "Server process is running (PID: $SERVER_PID)"
+          echo "Waiting for server to be ready..."
+          sleep 5
+          
+          # Check server logs for any errors
+          if grep -i "error\|failed\|fatal" server.log 2>/dev/null | grep -v "MongoDB connection error" | head -5; then
+            echo "⚠️ Found potential errors in server logs (non-fatal):"
+            tail -20 server.log
+          fi
 
       - name: Check backend server
         run: |
@@ -159,22 +170,47 @@ jobs:
             fi
             
             # Check if server is responding
-            if curl -f -s http://localhost:3000/ > /dev/null 2>&1 || \
-               curl -f -s http://localhost:3000/api/health > /dev/null 2>&1 || \
-               curl -f -s http://localhost:3000/api > /dev/null 2>&1; then
+            if curl -f -s http://localhost:3000/health > /dev/null 2>&1 || \
+               curl -f -s http://localhost:3000/ > /dev/null 2>&1 || \
+               curl -f -s http://localhost:3000/api/login > /dev/null 2>&1; then
               echo "✅ Backend server is running"
               exit 0
             fi
             
-            echo "Attempt $i/$MAX_ATTEMPTS: Backend not ready yet, waiting..."
+            # Show progress every 10 attempts
+            if [ $((i % 10)) -eq 0 ]; then
+              echo "Still waiting... (attempt $i/$MAX_ATTEMPTS)"
+              if [ -f ./backend/server.log ]; then
+                echo "Recent server logs:"
+                tail -5 ./backend/server.log
+              fi
+            else
+              echo "Attempt $i/$MAX_ATTEMPTS: Backend not ready yet, waiting..."
+            fi
             sleep 2
           done
           
           echo "❌ Backend server not responding"
+          echo "Final server status:"
+          if [ -f ./backend/server.pid ]; then
+            SERVER_PID=$(cat ./backend/server.pid)
+            echo "Server PID: $SERVER_PID"
+            if kill -0 $SERVER_PID 2>/dev/null; then
+              echo "✅ Server process is still running"
+            else
+              echo "❌ Server process is not running"
+            fi
+          fi
+          
           if [ -f ./backend/server.log ]; then
-            echo "Server logs:"
+            echo "Full server logs:"
             cat ./backend/server.log
           fi
+          
+          echo "Testing endpoints manually:"
+          curl -v http://localhost:3000/health 2>&1 || echo "Health endpoint failed"
+          curl -v http://localhost:3000/ 2>&1 || echo "Root endpoint failed"
+          
           exit 1
 
       - name: Run Cypress tests

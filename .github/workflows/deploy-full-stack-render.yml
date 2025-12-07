@@ -92,12 +92,19 @@ jobs:
 
       - name: Trigger Render Backend Deployment
         run: |
-          if [ -n "${{ secrets.RENDER_BACKEND_DEPLOY_HOOK_URL }}" ]; then
-            curl -X POST "${{ secrets.RENDER_BACKEND_DEPLOY_HOOK_URL }}"
-            echo "✅ Backend deployment triggered via webhook"
+          WEBHOOK_URL="${{ secrets.RENDER_BACKEND_DEPLOY_HOOK_URL }}"
+          if [ -n "$WEBHOOK_URL" ] && [ "$WEBHOOK_URL" != "null" ] && [ "$WEBHOOK_URL" != "" ]; then
+            echo "Triggering backend deployment via webhook..."
+            WEBHOOK_URL=$(echo "$WEBHOOK_URL" | sed 's/^"//;s/"$//' | xargs)
+            if curl -f -X POST "$WEBHOOK_URL" 2>/dev/null; then
+              echo "✅ Backend deployment triggered via webhook"
+            else
+              echo "⚠️ Webhook call failed, but Render will auto-deploy on git push"
+            fi
           else
             echo "ℹ️ Render will auto-deploy on git push (webhook not configured)"
           fi
+        continue-on-error: true
 
   # Deploy frontend after CI passes
   deploy-frontend:
@@ -112,12 +119,19 @@ jobs:
 
       - name: Trigger Render Frontend Deployment
         run: |
-          if [ -n "${{ secrets.RENDER_FRONTEND_DEPLOY_HOOK_URL }}" ]; then
-            curl -X POST "${{ secrets.RENDER_FRONTEND_DEPLOY_HOOK_URL }}"
-            echo "✅ Frontend deployment triggered via webhook"
+          WEBHOOK_URL="${{ secrets.RENDER_FRONTEND_DEPLOY_HOOK_URL }}"
+          if [ -n "$WEBHOOK_URL" ] && [ "$WEBHOOK_URL" != "null" ] && [ "$WEBHOOK_URL" != "" ]; then
+            echo "Triggering frontend deployment via webhook..."
+            WEBHOOK_URL=$(echo "$WEBHOOK_URL" | sed 's/^"//;s/"$//' | xargs)
+            if curl -f -X POST "$WEBHOOK_URL" 2>/dev/null; then
+              echo "✅ Frontend deployment triggered via webhook"
+            else
+              echo "⚠️ Webhook call failed, but Render will auto-deploy on git push"
+            fi
           else
             echo "ℹ️ Render will auto-deploy on git push (webhook not configured)"
           fi
+        continue-on-error: true
 
   # Deployment summary
   deployment-summary:

@@ -41,9 +41,16 @@ jobs:
       - name: Trigger Render Deployment
         run: |
           # Render auto-deploys on git push, but we can trigger via webhook
-          if [ -n "${{ secrets.RENDER_FRONTEND_DEPLOY_HOOK_URL }}" ]; then
+          WEBHOOK_URL="${{ secrets.RENDER_FRONTEND_DEPLOY_HOOK_URL }}"
+          if [ -n "$WEBHOOK_URL" ] && [ "$WEBHOOK_URL" != "null" ] && [ "$WEBHOOK_URL" != "" ]; then
             echo "Triggering deployment via webhook..."
-            curl -X POST "${{ secrets.RENDER_FRONTEND_DEPLOY_HOOK_URL }}" || echo "Webhook call failed, but Render will auto-deploy on git push"
+            # Remove any quotes and trim whitespace
+            WEBHOOK_URL=$(echo "$WEBHOOK_URL" | sed 's/^"//;s/"$//' | xargs)
+            if curl -f -X POST "$WEBHOOK_URL" 2>/dev/null; then
+              echo "✅ Frontend deployment triggered via webhook"
+            else
+              echo "⚠️ Webhook call failed, but Render will auto-deploy on git push"
+            fi
           else
             echo "ℹ️ Render will auto-deploy on git push (webhook not configured)"
           fi
