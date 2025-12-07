@@ -5,6 +5,15 @@ node_modules/
 
 # Testing
 /coverage
+backend/coverage/
+frontend/coverage/
+*.lcov
+coverage/
+
+# Cypress
+frontend/cypress/screenshots/
+frontend/cypress/videos/
+frontend/cypress/downloads/
 
 # Production
 /dist
