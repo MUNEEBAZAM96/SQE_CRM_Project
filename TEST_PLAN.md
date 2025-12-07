@@ -27,11 +27,12 @@ The test plan will cover both **white-box** and **black-box** testing, focusing 
 - Verify all functional requirements are met across all modules (Invoice, Quote, Payment, Client, Settings, Dashboard, Authentication).
 - Achieve ≥80% code coverage with 100% API endpoint coverage.
 - Ensure application stability, security, performance, and usability.
-- Validate data integrity and business logic correctness.
+- Validate data integrity and business logic correctness. 
 - Test PDF generation and email functionality.
 - Verify responsive design and cross-browser compatibility.
 - Automate regression testing via CI/CD pipeline.
 - Deliver a production-ready, defect-free application.
+
 
 ---
 
@@ -65,6 +66,7 @@ Validating core features and user interactions without knowledge of internal cod
 - Send quote via email
 - Download quote as PDF
 
+
 #### Payment Management
 - CRUD operations for payments
 - Link payment to invoice
@@ -77,6 +79,7 @@ Validating core features and user interactions without knowledge of internal cod
 - Client list with pagination
 - Search and filter clients
 - Client summary statistics
+
 
 #### Settings Management
 - Company settings configuration

@@ -15,10 +15,7 @@ const connectDB = async () => {
   mongoServer = await MongoMemoryServer.create();
   const mongoUri = mongoServer.getUri();
   
-  await mongoose.connect(mongoUri, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  });
+  await mongoose.connect(mongoUri);
   
   // Wait for connection to be ready
   await mongoose.connection.db.admin().ping();
