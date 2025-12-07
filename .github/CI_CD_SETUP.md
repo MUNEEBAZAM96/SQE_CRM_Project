@@ -2,7 +2,13 @@
 
 ## Overview
 
-This project uses GitHub Actions for Continuous Integration and Continuous Deployment. The CI/CD pipeline automatically runs tests on every push and pull request to ensure code quality and prevent regressions.
+This project uses GitHub Actions for Continuous Integration and Continuous Deployment. The CI/CD pipeline automatically runs tests on every push and pull request to ensure code quality and prevent regressions. After tests pass, the pipeline automatically deploys the application to production.
+
+## 🚀 Deployment Strategy
+
+- **Backend**: Deployed to [Railway](https://railway.app)
+- **Frontend**: Deployed to [Vercel](https://vercel.com)
+- **Full Documentation**: See [DEPLOYMENT_GUIDE.md](../../DEPLOYMENT_GUIDE.md) for detailed setup instructions
 
 ## Workflows
 
@@ -56,6 +62,45 @@ This project uses GitHub Actions for Continuous Integration and Continuous Deplo
 - MongoDB service container
 - Simplified server startup
 - Faster execution for small changes
+
+### 5. Backend Deployment (`deploy-backend-railway.yml`)
+**Purpose**: Deploy backend to Railway after tests pass
+
+**Features:**
+- Automatic deployment on push to main
+- Manual deployment trigger
+- Railway CLI integration
+- Environment-specific deployments
+
+**When it runs:**
+- On push to main/master (backend changes only)
+- Manual workflow dispatch
+
+### 6. Frontend Deployment (`deploy-frontend-vercel.yml`)
+**Purpose**: Deploy frontend to Vercel after tests pass
+
+**Features:**
+- Automatic deployment on push to main
+- Manual deployment trigger
+- Vercel CLI integration
+- Production and preview deployments
+
+**When it runs:**
+- On push to main/master (frontend changes only)
+- Manual workflow dispatch
+
+### 7. Full Stack Deployment (`deploy-full-stack.yml`)
+**Purpose**: Complete CI/CD pipeline - test then deploy
+
+**Features:**
+- Runs all CI tests first
+- Deploys backend to Railway (if tests pass)
+- Deploys frontend to Vercel (if tests pass)
+- Deployment summary report
+
+**When it runs:**
+- On push to main/master
+- Manual workflow dispatch
 
 ## Setup Instructions
 
@@ -211,13 +256,48 @@ To manually trigger a workflow:
 3. Click "Run workflow"
 4. Select branch and click "Run workflow"
 
+## Deployment Setup
+
+### Required Secrets
+
+Add these secrets in GitHub → Settings → Secrets and variables → Actions:
+
+**For Railway (Backend):**
+- `RAILWAY_TOKEN`: Your Railway API token
+- `RAILWAY_PROJECT_ID`: Your Railway project ID
+- `RAILWAY_SERVICE_ID`: Your Railway service ID (optional)
+
+**For Vercel (Frontend):**
+- `VERCEL_TOKEN`: Your Vercel API token
+
+### Setup Instructions
+
+1. **Railway Setup:**
+   - Create account at [railway.app](https://railway.app)
+   - Create new project from GitHub repo
+   - Set root directory to `backend`
+   - Get token from Account Settings → Tokens
+   - Get Project ID from Project Settings
+
+2. **Vercel Setup:**
+   - Create account at [vercel.com](https://vercel.com)
+   - Import GitHub repository
+   - Set root directory to `frontend`
+   - Get token from Account Settings → Tokens
+
+3. **Add Secrets:**
+   - Add all required secrets to GitHub repository
+   - See [DEPLOYMENT_GUIDE.md](../../DEPLOYMENT_GUIDE.md) for detailed steps
+
 ## Next Steps
 
 1. **Push workflows to repository**: The workflows will automatically activate
-2. **Monitor first run**: Check the Actions tab for initial execution
-3. **Review results**: Verify all tests pass
-4. **Configure Codecov** (optional): For coverage tracking
-5. **Set up branch protection** (optional): Require CI to pass before merge
+2. **Set up deployment platforms**: Railway (backend) and Vercel (frontend)
+3. **Add GitHub secrets**: Required tokens for deployment
+4. **Monitor first run**: Check the Actions tab for initial execution
+5. **Review results**: Verify all tests pass and deployments succeed
+6. **Configure Codecov** (optional): For coverage tracking
+7. **Set up branch protection** (optional): Require CI to pass before merge
 
 ## Support
 
