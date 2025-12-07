@@ -110,6 +110,18 @@ jobs:
     name: Frontend E2E Tests (Cypress)
     runs-on: ubuntu-latest
     
+    services:
+      mongodb:
+        image: mongo:7.0
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.adminCommand(\"ping\")'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+          --health-start-period 20s
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -135,6 +147,23 @@ jobs:
         working-directory: ./frontend
         run: npx cypress install
 
+      - name: Wait for MongoDB to be ready
+        run: |
+          echo "Waiting for MongoDB to be ready..."
+          # Wait for MongoDB port to be open using bash built-in TCP check
+          for i in {1..30}; do
+            if timeout 1 bash -c "echo > /dev/tcp/localhost/27017" 2>/dev/null; then
+              echo "✅ MongoDB port is open!"
+              # Give MongoDB a moment to fully initialize
+              sleep 3
+              exit 0
+            fi
+            echo "Attempt $i/30: MongoDB not ready yet, waiting..."
+            sleep 2
+          done
+          echo "❌ MongoDB failed to start"
+          exit 1
+
       - name: Setup test environment
         working-directory: ./backend
         run: |
@@ -143,27 +172,46 @@ jobs:
           echo "PORT=3000" >> .env
           echo "DATABASE=mongodb://localhost:27017/test" >> .env
           echo "JWT_SECRET=test-secret-key-for-ci" >> .env
+          echo "RESEND_API=re_test_mock_key" >> .env
 
       - name: Start backend server
         working-directory: ./backend
+        env:
+          NODE_ENV: test
+          PORT: 3000
+          DATABASE: mongodb://localhost:27017/test
+          JWT_SECRET: test-secret-key-for-ci
+          RESEND_API: re_test_mock_key
         run: |
           npm start > server.log 2>&1 &
           echo $! > server.pid
           echo "Backend server starting (PID: $(cat server.pid))..."
-          sleep 15
+          sleep 10
 
       - name: Wait for backend server
         run: |
           echo "Waiting for backend server to be ready..."
-          for i in {1..30}; do
+          for i in {1..60}; do
+            # Check if server process is still running
+            if ! kill -0 $(cat ./backend/server.pid) 2>/dev/null; then
+              echo "❌ Backend server process died"
+              if [ -f ./backend/server.log ]; then
+                echo "Server logs:"
+                cat ./backend/server.log
+              fi
+              exit 1
+            fi
+            
+            # Check if server is responding
             if curl -f http://localhost:3000/ 2>/dev/null || curl -f http://localhost:3000/api/health 2>/dev/null; then
               echo "✅ Backend server is ready!"
               exit 0
             fi
-            echo "Attempt $i/30: Backend not ready yet, waiting..."
+            
+            echo "Attempt $i/60: Backend not ready yet, waiting..."
             sleep 2
           done
-          echo "❌ Backend server failed to start"
+          echo "❌ Backend server failed to start (timeout after 120 seconds)"
           if [ -f ./backend/server.log ]; then
             echo "Server logs:"
             cat ./backend/server.log
@@ -172,8 +220,23 @@ jobs:
 
       - name: Run Cypress E2E tests
         working-directory: ./frontend
+        env:
+          CYPRESS_BASE_URL: http://localhost:3000
         run: npx cypress run
         continue-on-error: false
+
+      - name: Stop backend server
+        if: always()
+        run: |
+          if [ -f ./backend/server.pid ]; then
+            PID=$(cat ./backend/server.pid)
+            if kill -0 $PID 2>/dev/null; then
+              echo "Stopping backend server (PID: $PID)..."
+              kill $PID || true
+              sleep 2
+              kill -9 $PID 2>/dev/null || true
+            fi
+          fi
 
       - name: Upload Cypress screenshots
         if: failure()
