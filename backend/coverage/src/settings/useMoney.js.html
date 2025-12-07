@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">37.5% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>8/8</span>
+                <span class='fraction'>3/8</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">75% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>6/8</span>
+                <span class='fraction'>0/8</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>4/4</span>
+                <span class='fraction'>0/4</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">37.5% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>8/8</span>
+                <span class='fraction'>3/8</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line high'></div>
+    <div class='status-line low'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -115,22 +115,20 @@
 <a name='L50'></a><a href='#L50'>50</a>
 <a name='L51'></a><a href='#L51'>51</a>
 <a name='L52'></a><a href='#L52'>52</a>
-<a name='L53'></a><a href='#L53'>53</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">37x</span>
+<a name='L53'></a><a href='#L53'>53</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">26x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">37x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">26x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">12x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">11x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -145,19 +143,18 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">10x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">12x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -166,10 +163,13 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">37x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">26x</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">const currency = require('currency.js');
 &nbsp;
-const useMoney = ({ settings }) =&gt; {
+const useMoney = <span class="fstat-no" title="function not covered" >({</span> settings }) =&gt; {
   const {
     currency_symbol,
     currency_position,
@@ -177,10 +177,10 @@ const useMoney = ({ settings }) =&gt; {
     thousand_sep,
     cent_precision,
     zero_format,
-  } = settings;
+  } = <span class="cstat-no" title="statement not covered" >settings;</span>
 &nbsp;
-  function currencyFormat(amount) {
-    return currency(amount).dollars() &gt; 0 || !zero_format
+  function <span class="fstat-no" title="function not covered" >currencyFormat(</span>amount) {
+<span class="cstat-no" title="statement not covered" >    return currency(amount).dollars() &gt; 0 || !zero_format</span>
       ? currency(amount, {
           separator: thousand_sep,
           decimal: decimal_sep,
@@ -196,17 +196,17 @@ const useMoney = ({ settings }) =&gt; {
           }).format();
   }
 &nbsp;
-  function moneyFormatter({ amount = <span class="branch-0 cbranch-no" title="branch not covered" >0 </span>}) {
-    return currency_position === 'before'
+  function <span class="fstat-no" title="function not covered" >moneyFormatter(</span>{ amount = <span class="branch-0 cbranch-no" title="branch not covered" >0 </span>}) {
+<span class="cstat-no" title="statement not covered" >    return currency_position === 'before'</span>
       ? currency_symbol + ' ' + currencyFormat(amount)
       : currencyFormat(amount) + ' ' + currency_symbol;
   }
 &nbsp;
-  function amountFormatter({ amount = <span class="branch-0 cbranch-no" title="branch not covered" >0 </span>}) {
-    return currencyFormat(amount);
+  function <span class="fstat-no" title="function not covered" >amountFormatter(</span>{ amount = <span class="branch-0 cbranch-no" title="branch not covered" >0 </span>}) {
+<span class="cstat-no" title="statement not covered" >    return currencyFormat(amount);</span>
   }
 &nbsp;
-  return {
+<span class="cstat-no" title="statement not covered" >  return {</span>
     moneyFormatter,
     amountFormatter,
     currency_symbol,
@@ -226,7 +226,7 @@ module.exports = useMoney;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-12-07T08:41:12.529Z
+                at 2025-12-07T08:46:22.462Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
