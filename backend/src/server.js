@@ -30,7 +30,6 @@ if (process.env.DATABASE) {
   console.warn('⚠️ DATABASE environment variable not set');
 }
 
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
 mongoose.connection.on('error', (error) => {
   console.log(
