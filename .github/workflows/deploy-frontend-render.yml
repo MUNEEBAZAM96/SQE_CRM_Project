@@ -41,10 +41,13 @@ jobs:
       - name: Trigger Render Deployment
         run: |
           # Render auto-deploys on git push, but we can trigger via webhook
-          curl -X POST "${{ secrets.RENDER_FRONTEND_DEPLOY_HOOK_URL }}" || \
-          echo "Deployment triggered via Render auto-deploy (git push)"
-        env:
-          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+          if [ -n "${{ secrets.RENDER_FRONTEND_DEPLOY_HOOK_URL }}" ]; then
+            echo "Triggering deployment via webhook..."
+            curl -X POST "${{ secrets.RENDER_FRONTEND_DEPLOY_HOOK_URL }}" || echo "Webhook call failed, but Render will auto-deploy on git push"
+          else
+            echo "ℹ️ Render will auto-deploy on git push (webhook not configured)"
+          fi
+        continue-on-error: true
 
       - name: Deployment Status
         run: |

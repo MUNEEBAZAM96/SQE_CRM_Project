@@ -182,39 +182,71 @@ jobs:
           DATABASE: mongodb://localhost:27017/test
           JWT_SECRET: test-secret-key-for-ci
           RESEND_API: re_test_mock_key
+          SECRET: test-secret
+          KEY: test-key
+          JWT_SCHEME: jwt
+          JWT_TOKEN_PREFIX: Bearer
+          JWT_TOKEN_EXPIRATION: 18000000
+          JWT_TOKEN_HASH_ALGO: SHA-256
         run: |
           npm start > server.log 2>&1 &
-          echo $! > server.pid
-          echo "Backend server starting (PID: $(cat server.pid))..."
+          SERVER_PID=$!
+          echo $SERVER_PID > server.pid
+          echo "Backend server starting (PID: $SERVER_PID)..."
+          sleep 5
+          
+          # Check if process is still running
+          if ! kill -0 $SERVER_PID 2>/dev/null; then
+            echo "❌ Server process died immediately. Logs:"
+            cat server.log
+            exit 1
+          fi
+          
+          echo "Server process is running, waiting for it to be ready..."
           sleep 10
 
       - name: Wait for backend server
         run: |
           echo "Waiting for backend server to be ready..."
-          for i in {1..60}; do
+          MAX_ATTEMPTS=60
+          for i in $(seq 1 $MAX_ATTEMPTS); do
             # Check if server process is still running
-            if ! kill -0 $(cat ./backend/server.pid) 2>/dev/null; then
-              echo "❌ Backend server process died"
-              if [ -f ./backend/server.log ]; then
-                echo "Server logs:"
-                cat ./backend/server.log
+            if [ -f ./backend/server.pid ]; then
+              SERVER_PID=$(cat ./backend/server.pid)
+              if ! kill -0 $SERVER_PID 2>/dev/null; then
+                echo "❌ Backend server process died (PID: $SERVER_PID)"
+                if [ -f ./backend/server.log ]; then
+                  echo "Server logs:"
+                  cat ./backend/server.log
+                fi
+                exit 1
               fi
+            else
+              echo "❌ Server PID file not found"
               exit 1
             fi
             
             # Check if server is responding
-            if curl -f http://localhost:3000/ 2>/dev/null || curl -f http://localhost:3000/api/health 2>/dev/null; then
+            if curl -f -s http://localhost:3000/ > /dev/null 2>&1 || \
+               curl -f -s http://localhost:3000/api/health > /dev/null 2>&1 || \
+               curl -f -s http://localhost:3000/api > /dev/null 2>&1; then
               echo "✅ Backend server is ready!"
               exit 0
             fi
             
-            echo "Attempt $i/60: Backend not ready yet, waiting..."
+            echo "Attempt $i/$MAX_ATTEMPTS: Backend not ready yet, waiting..."
             sleep 2
           done
-          echo "❌ Backend server failed to start (timeout after 120 seconds)"
+          
+          echo "❌ Backend server failed to start (timeout after $((MAX_ATTEMPTS * 2)) seconds)"
           if [ -f ./backend/server.log ]; then
             echo "Server logs:"
             cat ./backend/server.log
+          fi
+          if [ -f ./backend/server.pid ]; then
+            SERVER_PID=$(cat ./backend/server.pid)
+            echo "Server PID: $SERVER_PID"
+            ps aux | grep $SERVER_PID || echo "Process not found"
           fi
           exit 1
 
@@ -284,9 +316,13 @@ jobs:
           echo "- Status: ${{ needs.frontend-e2e-tests.result }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           
-          if [ "${{ needs.backend-unit-tests.result }}" != "success" ] || \
-             [ "${{ needs.backend-integration-tests.result }}" != "success" ] || \
-             [ "${{ needs.frontend-e2e-tests.result }}" != "success" ]; then
+          UNIT_STATUS="${{ needs.backend-unit-tests.result }}"
+          INTEGRATION_STATUS="${{ needs.backend-integration-tests.result }}"
+          E2E_STATUS="${{ needs.frontend-e2e-tests.result }}"
+          
+          if [ "$UNIT_STATUS" != "success" ] || \
+             [ "$INTEGRATION_STATUS" != "success" ] || \
+             [ "$E2E_STATUS" != "success" ]; then
             echo "❌ Some tests failed. Please check the logs above." >> $GITHUB_STEP_SUMMARY
             exit 1
           else
