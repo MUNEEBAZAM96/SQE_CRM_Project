@@ -72,7 +72,10 @@ const forgetPassword = async (req, res, { userModel }) => {
     });
   } catch (mailError) {
     // Log error but don't fail the request - email sending might fail in test/dev environments
-    console.error('Failed to send email:', mailError.message);
+    // Suppress error logging in test environment
+    if (process.env.NODE_ENV !== 'test') {
+      console.error('Failed to send email:', mailError.message);
+    }
   }
 
   return res.status(200).json({
